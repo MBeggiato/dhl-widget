@@ -1,0 +1,37 @@
+name: Check widget
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test API parser
+        run: node --test tests/api.test.cjs
+      - name: Test release packaging
+        run: python3 tests/build.test.py
+      - name: Check update script syntax
+        run: bash -n update-widget.sh
+      - name: Build package
+        run: python3 scripts/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packstation-preview
+          path: |
+            dist/packstation.plasmoid
+            dist/packstation.plasmoid.sha256
+          if-no-files-found: error

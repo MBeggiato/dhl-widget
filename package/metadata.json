@@ -1,0 +1,17 @@
+{
+  "KPlugin": {
+    "Id": "de.local.packstation",
+    "Name": "Packstation",
+    "Description": "Freie DHL-Packstationsfächer nach Größe",
+    "Icon": "contents/images/packstation.svg",
+    "Version": "0.1.0",
+    "License": "MIT",
+    "Category": "Online Services",
+    "Authors": [{ "Name": "MBeggiato" }],
+    "Website": "https://github.com/MBeggiato/dhl-widget"
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0",
+  "X-Plasma-NotificationArea": true,
+  "X-Plasma-NotificationAreaCategory": "ApplicationStatus"
+}

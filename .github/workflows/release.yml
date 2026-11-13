@@ -1,0 +1,61 @@
+name: Publish release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node --test tests/api.test.cjs
+      - run: python3 tests/build.test.py
+      - run: bash -n update-widget.sh
+      - name: Validate tag and build release
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/build.py --tag "$RELEASE_TAG"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: |
+            dist/packstation.plasmoid
+            dist/packstation.plasmoid.sha256
+          if-no-files-found: error
+
+  publish:
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: dist
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then prerelease+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" \
+            dist/packstation.plasmoid dist/packstation.plasmoid.sha256 \
+            --verify-tag --title "Packstation $RELEASE_TAG" \
+            --generate-notes "${prerelease[@]}"
